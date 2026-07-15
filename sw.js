@@ -1,5 +1,6 @@
 const CACHE_NAME = 'border-guide-v3';
 const STATIC_ASSETS = [
+  './',
   './index.html',
   './manifest.json',
   './icon-192.png',
