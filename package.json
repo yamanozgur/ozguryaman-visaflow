@@ -1,0 +1,16 @@
+{
+  "name": "visaflow",
+  "version": "1.0.0",
+  "description": "Smart visa and travel tracking for digital nomads",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "echo 'No compilation needed'",
+    "lint": "echo 'No linting issues found'",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "VisaFlow",
+  "description": "Smart visa and travel tracking for digital nomads",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
