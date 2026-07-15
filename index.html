@@ -1062,6 +1062,20 @@ function flagImg(country,cs,size){
 // ============================================================
 const STORAGE_KEY = 'np_v5';
 ['np_v1','np_v2','np_v3','np_v4','np_v4_free','visaflow'].forEach(function(k){ localStorage.removeItem(k); });
+
+let firebaseDbActive = false;
+function checkFirebaseStatus() {
+  fetch('/api/status')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      firebaseDbActive = !!data.firebaseEnabled;
+      renderProfile();
+    })
+    .catch(function(err) {
+      console.warn('Could not fetch DB status:', err);
+    });
+}
+
 function save(){ 
   try{ 
     localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); 
@@ -2115,15 +2129,22 @@ function renderProfile(){
 
     (state.currentUserEmail ?
     '<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'+
         '<div style="display:flex;align-items:center;gap:10px">'+
           '<span style="font-size:20px">☁️</span>'+
           '<div style="text-align:left">'+
-            '<div style="font-size:13px;font-weight:700;color:var(--text)">Cloud Synced ✓</div>'+
+            '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+
+              '<div style="font-size:13px;font-weight:700;color:var(--text)">Cloud Synced ✓</div>'+
+              (firebaseDbActive ? 
+                '<span style="font-size:9px;background:rgba(16,185,129,0.15);color:var(--green);padding:1px 6px;border-radius:10px;font-weight:700">Firestore Active</span>' :
+                '<span style="font-size:9px;background:rgba(245,158,11,0.15);color:var(--orange);padding:1px 6px;border-radius:10px;font-weight:700">Demo Storage</span>'
+              )+
+            '</div>'+
             '<div style="font-size:11px;color:var(--muted);margin-top:2px">Backup account: ' + state.currentUserEmail + '</div>'+
+            (!firebaseDbActive ? '<div style="font-size:10px;color:var(--orange);margin-top:4px;line-height:1.2">⚠️ Ephemeral storage. Configure <b>FIREBASE_SERVICE_ACCOUNT</b> in Settings for persistent cloud backup.</div>' : '')+
           '</div>'+
         '</div>'+
-        '<div style="display:flex;gap:8px">'+
+        '<div style="display:flex;gap:8px;align-items:center">'+
           '<button style="background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer" onclick="triggerSync()">Sync Now</button>'+
           '<button style="background:none;color:var(--red);border:none;padding:6px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:underline" onclick="logout()">Logout</button>'+
         '</div>'+
@@ -3186,12 +3207,17 @@ function triggerSync() {
 }
 
 function logout() {
-  state.currentUserEmail = null;
-  // Clear premium status when logging out (since premium is tied to cloud account)
-  state.user.isPremium = false;
-  // Reset demo user name on logout
-  state.user.name = '';
-  state.user.initials = '';
+  state = {
+    user: { name: '', initials: '', photo: null, notifVisa: true, notifReminder: true, onboarded: true, isPremium: false },
+    passports: [],
+    visas: [],
+    residencies: [],
+    travels: [],
+    currentCountry: null,
+    currentEntry: null,
+    activePassportId: null,
+    currentUserEmail: null
+  };
   save();
   renderAll();
   renderProfile();
@@ -3597,6 +3623,7 @@ function resetOnboarding(){
 // ============================================================
 const loaded=load();
 if(!loaded) initDemo();
+checkFirebaseStatus();
 const bootOb=document.getElementById('onboarding');
 if(state.user.onboarded){ bootOb.classList.add('hidden'); }
 else{ bootOb.classList.remove('hidden'); bootOb.style.opacity='1'; }
