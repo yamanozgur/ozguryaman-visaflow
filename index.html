@@ -391,6 +391,7 @@ input:checked+.slider::before{transform:translateX(20px);}
 
   <!-- DASHBOARD -->
   <div class="page active" id="page-home">
+    <div id="pwa-install-banner"></div>
     <div id="alerts-container"></div>
     <div id="current-location-section"></div>
     <div id="ad-dashboard"></div>
@@ -778,6 +779,8 @@ input:checked+.slider::before{transform:translateX(20px);}
 <div class="toast" id="toast"></div>
 
 <script>
+var deferredPrompt = null;
+
 // ============================================================
 // STATE
 // ============================================================
@@ -1133,7 +1136,7 @@ function renderAll(){ updateGreeting(); renderDashboard(); renderAllVisas(); ren
 // ============================================================
 // DASHBOARD
 // ============================================================
-function renderDashboard(){ renderAlerts(); renderCurrentLocation(); renderAds(); renderActiveVisas(); renderSchengenTracker(); renderResidencies(); renderReminders(); }
+function renderDashboard(){ renderInstallPromo(); renderAlerts(); renderCurrentLocation(); renderAds(); renderActiveVisas(); renderSchengenTracker(); renderResidencies(); renderReminders(); }
 
 function renderAds(){
   var el = document.getElementById('ad-dashboard');
@@ -2173,6 +2176,49 @@ function renderProfile(){
         '<label class="switch"><input type="checkbox" '+(state.user.isPremium?'checked':'')+' onchange="state.user.isPremium=this.checked;save();renderAll();renderProfile()"><span class="slider"></span></label>'+
       '</div>'+
     '</div>'+
+
+    (function(){
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      
+      let installHtml = '';
+      if (isStandalone) {
+        installHtml = 
+          '<div class="settings-item" style="pointer-events:none">'+
+            '<div class="settings-icon" style="background:var(--green-l)">📱</div>'+
+            '<div class="settings-label">App Status</div>'+
+            '<div class="settings-value" style="color:var(--green); font-weight:700">Installed (PWA) ✓</div>'+
+          '</div>';
+      } else if (isiOS) {
+        installHtml = 
+          '<div class="settings-item" style="display:block; padding:12px 16px; height:auto; cursor:default">'+
+            '<div style="display:flex; align-items:center; gap:12px; margin-bottom:6px">'+
+              '<div class="settings-icon" style="background:var(--blue-l)">📱</div>'+
+              '<div class="settings-label" style="font-weight:700">Install App on iOS</div>'+
+            '</div>'+
+            '<div style="font-size:11px; color:var(--muted); line-height:1.4">'+
+              'Tap the <strong>Share 📤</strong> button below and select <strong>Add to Home Screen ➕</strong> to run VisaFlow as a native app.'+
+            '</div>'+
+          '</div>';
+      } else if (deferredPrompt) {
+        installHtml = 
+          '<div class="settings-item" onclick="triggerPwaInstall()" style="cursor:pointer">'+
+            '<div class="settings-icon" style="background:var(--green-l)">📱</div>'+
+            '<div class="settings-label" style="font-weight:700; color:var(--green)">Install VisaFlow</div>'+
+            '<div class="settings-value" style="color:var(--green); font-weight:700">Install App ➔</div>'+
+          '</div>';
+      } else {
+        installHtml = 
+          '<div class="settings-item" style="pointer-events:none">'+
+            '<div class="settings-icon" style="background:var(--bg2)">📱</div>'+
+            '<div class="settings-label">App Support</div>'+
+            '<div class="settings-value" style="color:var(--muted)">Chrome, Safari, Edge support</div>'+
+          '</div>';
+      }
+      
+      return '<div class="section-title">Application Setup</div>'+
+             '<div class="settings-group">'+installHtml+'</div>';
+    })()+
 
     (!state.user.isPremium ?
       '<div class="ad-container" style="margin-top:18px">'+
@@ -3557,6 +3603,101 @@ if('serviceWorker' in navigator){
       }
     });
   }).catch(function(){});
+}
+
+// ============================================================
+// PWA INSTALLATION PROMPTS & EVENT LISTENERS
+// ============================================================
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  renderInstallPromo();
+  const profPage = document.getElementById('page-profile');
+  if (profPage && profPage.classList.contains('active')) {
+    renderProfile();
+  }
+});
+
+window.addEventListener('appinstalled', function(e) {
+  deferredPrompt = null;
+  if (state && state.user) {
+    state.user.dismissedInstallPromo = true;
+    save();
+  }
+  renderInstallPromo();
+  showToast('VisaFlow başarıyla yüklendi! 🎉');
+});
+
+function renderInstallPromo() {
+  const bannerEl = document.getElementById('pwa-install-banner');
+  if (bannerEl) {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const dismissed = state.user && state.user.dismissedInstallPromo;
+
+    if (isStandalone || dismissed) {
+      bannerEl.innerHTML = '';
+      bannerEl.style.display = 'none';
+    } else {
+      bannerEl.style.display = 'block';
+      const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      
+      if (isiOS) {
+        bannerEl.innerHTML = 
+          '<div class="banner info" style="position:relative; margin-bottom: 16px; border: 1.5px solid var(--blue-b); padding: 14px; background: var(--blue-l)">'+
+            '<div class="banner-title" style="display:flex; justify-content:space-between; align-items:center; color: var(--blue); font-weight: 700">'+
+              '<span>📱 VisaFlow\'u Ana Ekrana Ekle</span>'+
+              '<button onclick="dismissInstallPromo(event)" style="background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:0 4px;">✕</button>'+
+            '</div>'+
+            '<div class="banner-body" style="font-size:12px; margin-top:6px; line-height:1.4; color: var(--text2)">'+
+              'Bu uygulamayı telefonunuza yüklemek için Safari\'de aşağıdaki <strong>Paylaş (Share) 📤</strong> simgesine dokunun, ardından <strong>Ana Ekrana Ekle (Add to Home Screen) ➕</strong> seçeneğini seçin.'+
+            '</div>'+
+          '</div>';
+      } else if (deferredPrompt) {
+        bannerEl.innerHTML = 
+          '<div class="banner" style="position:relative; margin-bottom: 16px; border: 1.5px solid var(--green-b); background: var(--green-l); padding: 14px; border-radius: var(--radius)">'+
+            '<div class="banner-title" style="display:flex; justify-content:space-between; align-items:center; color: #007A60; font-weight: 700">'+
+              '<span>📱 VisaFlow Mobil Uygulaması</span>'+
+              '<button onclick="dismissInstallPromo(event)" style="background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:0 4px;">✕</button>'+
+            '</div>'+
+            '<div class="banner-body" style="font-size:12px; margin-top:6px; line-height:1.4; color: var(--text2)">'+
+              'VisaFlow\'u telefonunuza yükleyerek çevrimdışı kullanım, tam ekran deneyimi ve hızlı erişim sağlayın.'+
+              '<div style="margin-top:10px; display:flex; gap:10px;">'+
+                '<button onclick="triggerPwaInstall()" style="background:var(--green); color:#fff; border:none; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; box-shadow: var(--shadow-sm)">Uygulamayı Yükle</button>'+
+                '<button onclick="dismissInstallPromo(event)" style="background:transparent; color:var(--text2); border:1.1px solid var(--border2); padding:8px 14px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer">Daha Sonra</button>'+
+              '</div>'+
+            '</div>'+
+          '</div>';
+      } else {
+        bannerEl.innerHTML = '';
+        bannerEl.style.display = 'none';
+      }
+    }
+  }
+}
+
+function dismissInstallPromo(event) {
+  if (event) event.stopPropagation();
+  if (state && state.user) {
+    state.user.dismissedInstallPromo = true;
+    save();
+  }
+  renderInstallPromo();
+}
+
+function triggerPwaInstall() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(choiceResult) {
+    if (choiceResult.outcome === 'accepted') {
+      console.log('User accepted PWA installation');
+    }
+    deferredPrompt = null;
+    renderInstallPromo();
+    if (document.getElementById('page-profile').classList.contains('active')) {
+      renderProfile();
+    }
+  });
 }
 </script>
 
