@@ -7,11 +7,17 @@ const STATIC_ASSETS = [
   './icon-512.png'
 ];
 
-// Install — cache static assets
+// Install — cache static assets with robust fallback
 self.addEventListener('install', function(e){
   e.waitUntil(
     caches.open(CACHE_NAME).then(function(cache){
-      return cache.addAll(STATIC_ASSETS);
+      return Promise.allSettled(
+        STATIC_ASSETS.map(function(asset) {
+          return cache.add(asset).catch(function(err) {
+            console.warn('Failed to cache asset:', asset, err);
+          });
+        })
+      );
     })
   );
   self.skipWaiting();
