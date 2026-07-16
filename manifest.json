@@ -2,33 +2,32 @@
   "name": "VisaFlow",
   "short_name": "VisaFlow",
   "description": "Smart visa and travel tracking for everyone",
-  "start_url": "/ozguryaman-visaflow/index.html",
-  "scope": "/ozguryaman-visaflow/",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#F5F7FA",
   "theme_color": "#00A884",
   "icons": [
     {
-      "src": "https://yamanozgur.github.io/ozguryaman-visaflow/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://yamanozgur.github.io/ozguryaman-visaflow/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://yamanozgur.github.io/ozguryaman-visaflow/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "https://yamanozgur.github.io/ozguryaman-visaflow/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

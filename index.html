@@ -2207,60 +2207,6 @@ function renderProfile(){
       '</div>'+
     '</div>'+
 
-    (function(){
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-      const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      
-      let installHtml = '';
-      if (isStandalone) {
-        installHtml = 
-          '<div class="settings-item" style="pointer-events:none">'+
-            '<div class="settings-icon" style="background:var(--green-l)">📱</div>'+
-            '<div class="settings-label">Uygulama Durumu</div>'+
-            '<div class="settings-value" style="color:var(--green); font-weight:700">Yüklendi (PWA) ✓</div>'+
-          '</div>';
-      } else {
-        let androidInstructions = 
-          '<div style="font-size:11.5px; color:var(--text); line-height:1.5; margin-top:4px">'+
-            '• <strong>Android (Chrome):</strong> Sağ üstteki <strong>üç nokta (⋮)</strong> menüsüne dokunun ve <strong>"Ana ekrana ekle"</strong> veya <strong>"Uygulamayı yükle"</strong> seçeneğini seçin.<br>'+
-            '• <strong>Instagram, WhatsApp vb. İçi Tarayıcılar:</strong> Uygulama içi tarayıcılarda yükleme yapılamaz. Sağ üstteki menüden <strong>"Chrome\'da Aç"</strong> seçeneğine dokunup ardından yükleyin.'+
-          '</div>';
-          
-        let iosInstructions = 
-          '<div style="font-size:11.5px; color:var(--text); line-height:1.5; margin-top:4px">'+
-            '• <strong>iOS (Safari):</strong> Safari alt menüsündeki <strong>Paylaş 📤</strong> butonuna dokunun, ardından listeden <strong>Ana Ekrana Ekle ➕</strong> seçeneğini seçin.<br>'+
-            '• <strong>Uygulama İçi Tarayıcılar:</strong> Instagram veya WhatsApp gibi uygulamalardan açtıysanız, sağ alttaki veya üstteki tarayıcı simgesine dokunup <strong>"Safari\'de Aç"</strong> yaptıktan sonra bu işlemi yapın.'+
-          '</div>';
-
-        let buttonOrStatus = '';
-        if (deferredPrompt) {
-          buttonOrStatus = 
-            '<div class="settings-item" onclick="triggerPwaInstall()" style="cursor:pointer; background:var(--green-l); border-radius:var(--radius-sm); margin-bottom:10px; border:1px solid var(--green-b)">'+
-              '<div class="settings-icon" style="background:var(--green); color:#fff; font-size:14px">📱</div>'+
-              '<div class="settings-label" style="font-weight:700; color:#007A60">VisaFlow\'u Yükle</div>'+
-              '<div class="settings-value" style="color:#007A60; font-weight:700">YÜKLE ➔</div>'+
-            '</div>';
-        }
-
-        installHtml = 
-          buttonOrStatus +
-          '<div style="padding:14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); cursor:default">'+
-            '<div style="display:flex; align-items:center; gap:10px; margin-bottom:8px">'+
-              '<div style="font-size:16px">💡</div>'+
-              '<div style="font-weight:700; font-size:13px; color:var(--text)">VisaFlow Nasıl Uygulama Olarak Yüklenir?</div>'+
-            '</div>'+
-            (isiOS ? iosInstructions : androidInstructions) +
-            '<div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); display:flex; justify-content:space-between; align-items:center">'+
-              '<span style="font-size:10.5px; color:var(--muted)">Yükleme banner\'ı gizlendi mi?</span>'+
-              '<button onclick="resetInstallPromoStatus(event)" style="background:var(--bg); border:1.1px solid var(--border); border-radius:6px; padding:4px 10px; font-size:10.5px; color:var(--text); cursor:pointer; font-weight:700; transition:all 0.2s">Banner\'ı Göster</button>'+
-            '</div>'+
-          '</div>';
-      }
-      
-      return '<div class="section-title">Uygulama Kurulumu (PWA)</div>'+
-             '<div class="settings-group" style="background:transparent; padding:0; border:none; box-shadow:none">'+installHtml+'</div>';
-    })()+
-
     (!state.user.isPremium ?
       '<div class="ad-container" style="margin-top:18px">'+
         '<div class="ad-badge">Sponsored</div>'+
