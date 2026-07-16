@@ -2,7 +2,8 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import admin from 'firebase-admin';
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,10 +34,10 @@ function initFirebase() {
 
   try {
     const serviceAccount = JSON.parse(serviceAccountStr);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
+    const firebaseApp = initializeApp({
+      credential: cert(serviceAccount)
     });
-    dbInstance = admin.firestore();
+    dbInstance = getFirestore(firebaseApp);
     console.log('Firebase Admin SDK and Cloud Firestore initialized successfully! ☁️');
   } catch (error) {
     console.error('Error initializing Firebase Admin SDK:', error);
