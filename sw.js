@@ -1,23 +1,16 @@
 const CACHE_NAME = 'border-guide-v3';
 const STATIC_ASSETS = [
-  './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
 ];
 
-// Install — cache static assets with robust fallback
+// Install — cache static assets
 self.addEventListener('install', function(e){
   e.waitUntil(
     caches.open(CACHE_NAME).then(function(cache){
-      return Promise.allSettled(
-        STATIC_ASSETS.map(function(asset) {
-          return cache.add(asset).catch(function(err) {
-            console.warn('Failed to cache asset:', asset, err);
-          });
-        })
-      );
+      return cache.addAll(STATIC_ASSETS);
     })
   );
   self.skipWaiting();
