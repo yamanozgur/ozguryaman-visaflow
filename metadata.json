@@ -1,10 +1,6 @@
 {
   "name": "VisaFlow",
-  "description": "Smart visa and travel tracking for digital nomads",
-  "requestFramePermissions": [
-    "geolocation"
-  ],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "description": "Dijital göçebeler ve gezginler için akıllı vize, seyahat ve Schengen (90/180) takip asistanı.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
