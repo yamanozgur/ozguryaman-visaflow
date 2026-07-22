@@ -683,7 +683,7 @@ input:checked+.slider::before{transform:translateX(20px);}
       <div class="paywall-price-title">Estimated Pricing</div>
       <div class="paywall-price-value">$4.99<span style="font-size:13px;font-weight:normal;color:var(--muted)">/mo · or $39/year</span></div>
     </div>
-    <button class="submit-btn" style="background:linear-gradient(135deg,#F59E0B,#D97706);margin-top:10px" onclick="simulateUpgrade()">Unlock Premium Now ⚡</button>
+    <button class="submit-btn" style="background:linear-gradient(135deg,#F59E0B,#D97706);margin-top:10px" onclick="triggerPaywallUpgrade()">Unlock Premium Now ⚡</button>
     <button class="secondary-btn" onclick="closeModal('paywall-modal')">Close</button>
   </div>
 </div>
@@ -1422,7 +1422,7 @@ function renderSchengenTracker(){
   var hasSchengenTravel = state.travels.find(function(t){ return isSchengen(t.country); });
   var currentlyInSchengen = state.currentCountry && isSchengen(state.currentCountry);
 
-  if(!hasSchengenTravel && !currentlyInSchengen){
+  if(!hasSchengenVisa && !hasSchengenTravel && !currentlyInSchengen){
     el.innerHTML=''; return;
   }
 
@@ -2805,7 +2805,7 @@ function openPaywall(reason){
   document.getElementById('pw-subtitle').textContent=subs[reason]||'Upgrade to unlock all features.';
   openModal('paywall-modal');
 }
-function simulateUpgrade(){ state.user.isPremium=true; save(); closeModal('paywall-modal'); renderAll(); showToast('✅ Premium activated!'); }
+function simulateUpgrade(){ state.user.isPremium=true; save(); closeModal('paywall-modal'); renderAll(); renderProfile(); showToast('✅ Premium activated! All features unlocked.'); }
 
 // ============================================================
 // CONTACT
