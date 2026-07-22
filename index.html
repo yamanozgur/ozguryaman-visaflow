@@ -541,17 +541,12 @@ input:checked+.slider::before{transform:translateX(20px);}
     <div class="modal-handle"></div>
     <input type="hidden" id="pp-edit-id" value="">
     <div class="modal-title" id="pp-modal-title">Add Passport</div>
-    <div class="modal-sub">Track your passports and expiration dates</div>
+    <div class="modal-sub">Select your citizenship country</div>
     <label class="form-label">Country</label>
-    <input class="form-input" id="pp-country" placeholder="e.g. Turkey">
-    <label class="form-label">Country Code (2 letters)</label>
-    <input class="form-input" id="pp-code" placeholder="e.g. TR" maxlength="2" style="text-transform:uppercase">
-    <label class="form-label">Passport Number (optional)</label>
-    <input class="form-input" id="pp-no" placeholder="e.g. U12345678">
-    <label class="form-label">Expiry Date</label>
-    <input class="form-input" id="pp-exp" type="date">
+    <input class="form-input" id="pp-country" placeholder="e.g. Turkey, Germany…" oninput="onPassportCountryInput(this.value)" autocomplete="off">
+    <div id="pp-country-dropdown" class="country-dropdown" style="display:none"></div>
     <button class="submit-btn" onclick="addPassport()">Save Passport</button>
-    <button class="delete-btn" id="pp-delete-btn" onclick="deletePassport()" style="display:none">🗑 Delete Passport</button>
+    <button class="delete-btn" id="pp-delete-btn" onclick="deletePassportFromModal()" style="display:none">🗑 Delete Passport</button>
     <button class="secondary-btn" onclick="closeModal('passport-modal')">Cancel</button>
   </div>
 </div>
@@ -1650,9 +1645,7 @@ function triggerPassportAdd(){
   document.getElementById('pp-modal-title').textContent='Add Passport';
   document.getElementById('pp-delete-btn').style.display='none';
   document.getElementById('pp-country').value='';
-  document.getElementById('pp-code').value='';
-  document.getElementById('pp-no').value='';
-  document.getElementById('pp-exp').value='';
+  document.getElementById('pp-country-dropdown').style.display='none';
   openModal('passport-modal');
 }
 function editPassport(id){
@@ -1662,20 +1655,18 @@ function editPassport(id){
   document.getElementById('pp-modal-title').textContent = 'Edit Passport';
   document.getElementById('pp-delete-btn').style.display = 'block';
   document.getElementById('pp-country').value = pp.country || '';
-  document.getElementById('pp-code').value = pp.code || '';
-  document.getElementById('pp-no').value = pp.no || '';
-  document.getElementById('pp-exp').value = pp.expiry || '';
+  document.getElementById('pp-country-dropdown').style.display='none';
   openModal('passport-modal');
 }
-function deletePassport(){
+function deletePassportFromModal(){
   const id = document.getElementById('pp-edit-id').value;
   if(!id) return;
-  if(!confirm('Delete this passport?')) return;
   state.passports = state.passports.filter(function(p){ return p.id!==id; });
   if(state.activePassportId===id){ state.activePassportId = state.passports.length ? state.passports[0].id : null; }
-  saveState(); closeModal('passport-modal'); renderPassportTabs(); renderAllVisas();
+  saveState(); closeModal('passport-modal'); renderPassportTabs(); renderAllVisas(); renderProfile();
   showToast('Passport deleted.');
 }
+function deletePassport(){ deletePassportFromModal(); }
 function profileDeletePassport(id){
   state.passports = state.passports.filter(function(p){ return p.id!==id; });
   if(state.activePassportId===id){ state.activePassportId = state.passports.length ? state.passports[0].id : null; }
@@ -2036,27 +2027,39 @@ function addVisa(){
 function addPassport(){
   const editId = document.getElementById('pp-edit-id').value;
   const country=document.getElementById('pp-country').value.trim();
-  const code=document.getElementById('pp-code').value.trim().toLowerCase();
-  const no=document.getElementById('pp-no').value.trim(), exp=document.getElementById('pp-exp').value;
   if(!country){showToast('Country name required');return;}
+  const cs=getCS(country);
+  const code=cs.code||country.slice(0,2).toLowerCase();
   if(editId){
     // Edit existing
     const pp = state.passports.find(function(p){ return p.id===editId; });
-    if(pp){ pp.country=country; pp.code=code; pp.no=no; pp.expiry=exp; }
-    saveState(); closeModal('passport-modal'); renderPassportTabs(); showToast('Passport updated ✓');
+    if(pp){ pp.country=country; pp.code=code; }
+    saveState(); closeModal('passport-modal'); renderPassportTabs(); renderProfile(); showToast('Passport updated ✓');
   } else {
     // Add new
     if(state.passports.length>=2){showToast('Maximum 2 passports allowed.');return;}
-    const pp={id:'pp'+Date.now(),country:country,code:code,no:no,expiry:exp};
+    const pp={id:'pp'+Date.now(),country:country,code:code};
     state.passports.push(pp);
     if(!state.activePassportId) state.activePassportId=pp.id;
-    saveState(); closeModal('passport-modal'); renderPassportTabs(); renderAllVisas(); showToast('Passport added ✓');
+    saveState(); closeModal('passport-modal'); renderPassportTabs(); renderAllVisas(); renderProfile(); showToast('Passport added ✓');
   }
-  ['pp-country','pp-code','pp-no','pp-exp'].forEach(function(i){document.getElementById(i).value='';});
+  document.getElementById('pp-country').value='';
 }
 
 // ============================================================
-// RESIDENCY: add + edit
+function onPassportCountryInput(val){
+  var dd=document.getElementById('pp-country-dropdown');
+  if(!val||val.length<1){dd.style.display='none';return;}
+  var matches=searchCountries(val,7);
+  if(!matches.length){dd.style.display='none';return;}
+  dd.innerHTML=matches.map(function(c){return countryOptionHTML(c,'selectPassportCountry');}).join('');
+  dd.style.display='block';
+}
+function selectPassportCountry(c){
+  document.getElementById('pp-country').value=c;
+  document.getElementById('pp-country-dropdown').style.display='none';
+}
+// // RESIDENCY: add + edit
 // ============================================================
 function onResCountryInput(val){
   var dd = document.getElementById('res-country-dropdown');
