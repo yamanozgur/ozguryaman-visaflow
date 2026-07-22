@@ -1677,7 +1677,6 @@ function deletePassport(){
   showToast('Passport deleted.');
 }
 function profileDeletePassport(id){
-  if(!confirm('Delete this passport?')) return;
   state.passports = state.passports.filter(function(p){ return p.id!==id; });
   if(state.activePassportId===id){ state.activePassportId = state.passports.length ? state.passports[0].id : null; }
   saveState(); renderProfile(); renderPassportTabs(); renderAllVisas();
@@ -2194,7 +2193,7 @@ function renderProfile(){
           '<div class="settings-label">'+pp.country+'</div>'+
           '<div class="settings-value">'+(pp.expiry?fmtDate(pp.expiry):(pp.exp?fmtDate(pp.exp):'—'))+'</div>'+
           (expDl>=0&&expDl<=90?'<span class="badge badge-orange" style="margin-left:6px">Exp. soon</span>':'')+
-          '<button onclick="profileDeletePassport(\''+pp.id+'\')" style="margin-left:10px;background:var(--red-l);color:var(--red);border:1.5px solid #FECACA;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">✕</button>'+
+          '<button data-ppid="'+pp.id+'" onclick="profileDeletePassport(this.dataset.ppid)" style="margin-left:10px;background:var(--red-l);color:var(--red);border:1.5px solid #FECACA;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">✕</button>'+
         '</div>';
       }).join('')+
       '<div class="settings-item" onclick="triggerPassportAdd()">'+
