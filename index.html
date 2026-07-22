@@ -683,7 +683,7 @@ input:checked+.slider::before{transform:translateX(20px);}
       <div class="paywall-price-title">Estimated Pricing</div>
       <div class="paywall-price-value">$4.99<span style="font-size:13px;font-weight:normal;color:var(--muted)">/mo · or $39/year</span></div>
     </div>
-    <button class="submit-btn" style="background:linear-gradient(135deg,#F59E0B,#D97706);margin-top:10px" onclick="triggerPaywallUpgrade()">Unlock Premium Now ⚡</button>
+    <button class="submit-btn" style="background:linear-gradient(135deg,#F59E0B,#D97706);margin-top:10px" onclick="simulateUpgrade()">Unlock Premium Now ⚡</button>
     <button class="secondary-btn" onclick="closeModal('paywall-modal')">Close</button>
   </div>
 </div>
@@ -1640,7 +1640,7 @@ function renderPassportTabs(){
   html+='<div class="passport-tab" onclick="triggerPassportAdd()">+ Add</div>';
   el.innerHTML=html;
 }
-function triggerPassportAdd(){ state.passports.length>=1?openPaywall('passport'):openModal('passport-modal'); }
+function triggerPassportAdd(){ (!state.user.isPremium && state.passports.length>=1)?openPaywall('passport'):openModal('passport-modal'); }
 function setActivePassport(id){ state.activePassportId=id; renderAllVisas(); }
 // ============================================================
 // VISA SUB-TABS
@@ -1969,7 +1969,7 @@ function populatePassportSelect(){
   sel.innerHTML=state.passports.map(function(pp){return '<option value="'+pp.id+'">'+pp.country+' ('+(pp.no||pp.code.toUpperCase())+')</option>';}).join('');
 }
 function addVisa(){
-  if(state.visas.length>=2){openPaywall('visa');return;}
+  if(!state.user.isPremium && state.visas.length>=2){openPaywall('visa');return;}
   let country=document.getElementById('add-country').value.trim();
   const passportId=document.getElementById('add-passport').value, start=document.getElementById('add-start').value;
   const end=document.getElementById('add-end').value, stay=parseInt(document.getElementById('add-stay').value)||30;
@@ -1993,7 +1993,7 @@ function addVisa(){
 // PASSPORT
 // ============================================================
 function addPassport(){
-  if(state.passports.length>=1){openPaywall('passport');return;}
+  if(!state.user.isPremium && state.passports.length>=1){openPaywall('passport');return;}
   const country=document.getElementById('pp-country').value.trim();
   const code=document.getElementById('pp-code').value.trim().toLowerCase();
   const no=document.getElementById('pp-no').value.trim(), exp=document.getElementById('pp-exp').value;
@@ -2805,7 +2805,7 @@ function openPaywall(reason){
   document.getElementById('pw-subtitle').textContent=subs[reason]||'Upgrade to unlock all features.';
   openModal('paywall-modal');
 }
-function simulateUpgrade(){ closeModal('paywall-modal'); showToast("You'll be notified on launch 🔔"); }
+function simulateUpgrade(){ state.user.isPremium=true; save(); closeModal('paywall-modal'); renderAll(); showToast('✅ Premium activated!'); }
 
 // ============================================================
 // CONTACT
