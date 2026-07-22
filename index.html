@@ -539,7 +539,7 @@ input:checked+.slider::before{transform:translateX(20px);}
 <div class="modal-overlay" id="passport-modal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add Passport</div>
+    <div class="modal-title" id="pp-modal-title">Add Passport</div>
     <div class="modal-sub">Track your passports and expiration dates</div>
     <label class="form-label">Country</label>
     <input class="form-input" id="pp-country" placeholder="e.g. Turkey">
@@ -549,7 +549,9 @@ input:checked+.slider::before{transform:translateX(20px);}
     <input class="form-input" id="pp-no" placeholder="e.g. U12345678">
     <label class="form-label">Expiry Date</label>
     <input class="form-input" id="pp-exp" type="date">
+    <input type="hidden" id="pp-edit-id">
     <button class="submit-btn" onclick="addPassport()">Save Passport</button>
+    <button class="delete-btn" id="pp-delete-btn" style="display:none" onclick="deletePassport()">Delete Passport</button>
     <button class="secondary-btn" onclick="closeModal('passport-modal')">Cancel</button>
   </div>
 </div>
@@ -1632,16 +1634,50 @@ function renderPassportTabs(){
   state.passports.forEach(function(pp){
     const active=state.activePassportId===pp.id, cs=getCS(pp.country);
     const flagHtml = flagImg(pp.country,cs,'sm').replace('class="flag-circle-sm"','style="width:18px;height:18px"');
-    html+='<div class="passport-tab '+(active?'active':'')+'" onclick="setActivePassport(\''+pp.id+'\')">'+
-      '<div style="width:18px;height:18px;border-radius:50%;overflow:hidden;flex-shrink:0">'+flagHtml+'</div>'+
-      pp.country+
+    html+='<div class="passport-tab '+(active?'active':'')+'" style="display:flex;align-items:center;gap:6px">'+
+      '<span onclick="setActivePassport(''+pp.id+'')" style="display:flex;align-items:center;gap:6px;flex:1">'+
+        '<div style="width:18px;height:18px;border-radius:50%;overflow:hidden;flex-shrink:0">'+flagHtml+'</div>'+
+        pp.country+
+      '</span>'+
+      '<span onclick="event.stopPropagation();openPassportModal(''+pp.id+'')" style="font-size:13px;padding:0 2px;opacity:0.6;cursor:pointer" title="Edit">✏️</span>'+
     '</div>';
   });
-  html+='<div class="passport-tab" onclick="triggerPassportAdd()">+ Add</div>';
+  if(state.passports.length < 2 || state.user.isPremium){
+    html+='<div class="passport-tab" onclick="triggerPassportAdd()">+ Add</div>';
+  }
   el.innerHTML=html;
 }
-function triggerPassportAdd(){ (!state.user.isPremium && state.passports.length>=1)?openPaywall('passport'):openModal('passport-modal'); }
+function triggerPassportAdd(){ (!state.user.isPremium && state.passports.length>=2)?openPaywall('passport'):openPassportModal(null); }
 function setActivePassport(id){ state.activePassportId=id; renderAllVisas(); }
+
+function openPassportModal(editId){
+  const titleEl=document.getElementById('pp-modal-title');
+  const deleteBtn=document.getElementById('pp-delete-btn');
+  const editInput=document.getElementById('pp-edit-id');
+  if(editId){
+    const pp=state.passports.find(function(p){return p.id===editId;}); if(!pp) return;
+    titleEl.textContent='Edit Passport';
+    document.getElementById('pp-country').value=pp.country||'';
+    document.getElementById('pp-code').value=(pp.code||'').toUpperCase();
+    document.getElementById('pp-no').value=pp.no||'';
+    document.getElementById('pp-exp').value=pp.exp||'';
+    editInput.value=editId;
+    deleteBtn.style.display='block';
+  } else {
+    titleEl.textContent='Add Passport';
+    ['pp-country','pp-code','pp-no','pp-exp'].forEach(function(i){document.getElementById(i).value='';});
+    editInput.value='';
+    deleteBtn.style.display='none';
+  }
+  openModal('passport-modal');
+}
+function deletePassport(){
+  const editId=document.getElementById('pp-edit-id').value;
+  if(!editId) return;
+  state.passports=state.passports.filter(function(p){return p.id!==editId;});
+  if(state.activePassportId===editId) state.activePassportId=state.passports.length?state.passports[0].id:null;
+  save();closeModal('passport-modal');renderAll();showToast('Passport deleted');
+}
 // ============================================================
 // VISA SUB-TABS
 // ============================================================
@@ -1969,7 +2005,7 @@ function populatePassportSelect(){
   sel.innerHTML=state.passports.map(function(pp){return '<option value="'+pp.id+'">'+pp.country+' ('+(pp.no||pp.code.toUpperCase())+')</option>';}).join('');
 }
 function addVisa(){
-  if(!state.user.isPremium && state.visas.length>=2){openPaywall('visa');return;}
+  if(state.visas.length>=2){openPaywall('visa');return;}
   let country=document.getElementById('add-country').value.trim();
   const passportId=document.getElementById('add-passport').value, start=document.getElementById('add-start').value;
   const end=document.getElementById('add-end').value, stay=parseInt(document.getElementById('add-stay').value)||30;
@@ -1993,15 +2029,22 @@ function addVisa(){
 // PASSPORT
 // ============================================================
 function addPassport(){
-  if(!state.user.isPremium && state.passports.length>=1){openPaywall('passport');return;}
+  const editId=document.getElementById('pp-edit-id').value;
   const country=document.getElementById('pp-country').value.trim();
   const code=document.getElementById('pp-code').value.trim().toLowerCase();
   const no=document.getElementById('pp-no').value.trim(), exp=document.getElementById('pp-exp').value;
   if(!country){showToast('Country name required');return;}
-  const pp={id:'pp'+Date.now(),country:country,code:code,no:no,exp:exp};
-  state.passports.push(pp);
-  if(!state.activePassportId) state.activePassportId=pp.id;
-  save();closeModal('passport-modal');renderAll();showToast('Passport added ✓');
+  if(editId){
+    const idx=state.passports.findIndex(function(p){return p.id===editId;});
+    if(idx>-1) state.passports[idx]=Object.assign({},state.passports[idx],{country:country,code:code,no:no,exp:exp});
+    save();closeModal('passport-modal');renderAll();showToast('Passport updated ✓');
+  } else {
+    if(!state.user.isPremium && state.passports.length>=2){openPaywall('passport');return;}
+    const pp={id:'pp'+Date.now(),country:country,code:code,no:no,exp:exp};
+    state.passports.push(pp);
+    if(!state.activePassportId) state.activePassportId=pp.id;
+    save();closeModal('passport-modal');renderAll();showToast('Passport added ✓');
+  }
   ['pp-country','pp-code','pp-no','pp-exp'].forEach(function(i){document.getElementById(i).value='';});
 }
 
@@ -2805,7 +2848,7 @@ function openPaywall(reason){
   document.getElementById('pw-subtitle').textContent=subs[reason]||'Upgrade to unlock all features.';
   openModal('paywall-modal');
 }
-function simulateUpgrade(){ state.user.isPremium=true; save(); closeModal('paywall-modal'); renderAll(); renderProfile(); showToast('✅ Premium activated! All features unlocked.'); }
+function simulateUpgrade(){ closeModal('paywall-modal'); showToast("You'll be notified on launch 🔔"); }
 
 // ============================================================
 // CONTACT
