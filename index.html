@@ -1056,7 +1056,19 @@ function save(){
   }catch(e){} 
 }
 function load(){
-  try{ const s=localStorage.getItem(STORAGE_KEY); if(s){ state=JSON.parse(s); return true; } }catch(e){}
+  try{
+    const s=localStorage.getItem(STORAGE_KEY);
+    if(s){
+      state=JSON.parse(s);
+      // Clean ghost passports: remove duplicates and entries without country
+      var seen={}, clean=[];
+      (state.passports||[]).forEach(function(pp){
+        if(pp&&pp.id&&pp.country&&!seen[pp.id]){seen[pp.id]=true;clean.push(pp);}
+      });
+      state.passports=clean.slice(0,2);
+      return true;
+    }
+  }catch(e){}
   return false;
 }
 
