@@ -539,7 +539,8 @@ input:checked+.slider::before{transform:translateX(20px);}
 <div class="modal-overlay" id="passport-modal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add Passport</div>
+    <input type="hidden" id="pp-edit-id" value="">
+    <div class="modal-title" id="pp-modal-title">Add Passport</div>
     <div class="modal-sub">Track your passports and expiration dates</div>
     <label class="form-label">Country</label>
     <input class="form-input" id="pp-country" placeholder="e.g. Turkey">
@@ -550,6 +551,7 @@ input:checked+.slider::before{transform:translateX(20px);}
     <label class="form-label">Expiry Date</label>
     <input class="form-input" id="pp-exp" type="date">
     <button class="submit-btn" onclick="addPassport()">Save Passport</button>
+    <button class="delete-btn" id="pp-delete-btn" onclick="deletePassport()" style="display:none">🗑 Delete Passport</button>
     <button class="secondary-btn" onclick="closeModal('passport-modal')">Cancel</button>
   </div>
 </div>
@@ -1635,12 +1637,46 @@ function renderPassportTabs(){
     html+='<div class="passport-tab '+(active?'active':'')+'" onclick="setActivePassport(\''+pp.id+'\')">'+
       '<div style="width:18px;height:18px;border-radius:50%;overflow:hidden;flex-shrink:0">'+flagHtml+'</div>'+
       pp.country+
+      '<span onclick="event.stopPropagation();editPassport(\''+pp.id+'\')\'" style="margin-left:4px;font-size:12px;cursor:pointer;opacity:0.7">✏️</span>'+
     '</div>';
   });
-  html+='<div class="passport-tab" onclick="triggerPassportAdd()">+ Add</div>';
+  if(state.passports.length < 2){
+    html+='<div class="passport-tab" onclick="triggerPassportAdd()">+ Add</div>';
+  }
   el.innerHTML=html;
 }
-function triggerPassportAdd(){ state.passports.length>=1?openPaywall('passport'):openModal('passport-modal'); }
+function triggerPassportAdd(){
+  if(state.passports.length >= 2){ showToast('Maximum 2 passports allowed.'); return; }
+  document.getElementById('pp-edit-id').value='';
+  document.getElementById('pp-modal-title').textContent='Add Passport';
+  document.getElementById('pp-delete-btn').style.display='none';
+  document.getElementById('pp-country').value='';
+  document.getElementById('pp-code').value='';
+  document.getElementById('pp-no').value='';
+  document.getElementById('pp-exp').value='';
+  openModal('passport-modal');
+}
+function editPassport(id){
+  const pp = state.passports.find(function(p){ return p.id===id; });
+  if(!pp) return;
+  document.getElementById('pp-edit-id').value = id;
+  document.getElementById('pp-modal-title').textContent = 'Edit Passport';
+  document.getElementById('pp-delete-btn').style.display = 'block';
+  document.getElementById('pp-country').value = pp.country || '';
+  document.getElementById('pp-code').value = pp.code || '';
+  document.getElementById('pp-no').value = pp.no || '';
+  document.getElementById('pp-exp').value = pp.expiry || '';
+  openModal('passport-modal');
+}
+function deletePassport(){
+  const id = document.getElementById('pp-edit-id').value;
+  if(!id) return;
+  if(!confirm('Delete this passport?')) return;
+  state.passports = state.passports.filter(function(p){ return p.id!==id; });
+  if(state.activePassportId===id){ state.activePassportId = state.passports.length ? state.passports[0].id : null; }
+  saveState(); closeModal('passport-modal'); renderPassportTabs(); renderAllVisas();
+  showToast('Passport deleted.');
+}
 function setActivePassport(id){ state.activePassportId=id; renderAllVisas(); }
 // ============================================================
 // VISA SUB-TABS
@@ -1993,15 +2029,24 @@ function addVisa(){
 // PASSPORT
 // ============================================================
 function addPassport(){
-  if(state.passports.length>=1){openPaywall('passport');return;}
+  const editId = document.getElementById('pp-edit-id').value;
   const country=document.getElementById('pp-country').value.trim();
   const code=document.getElementById('pp-code').value.trim().toLowerCase();
   const no=document.getElementById('pp-no').value.trim(), exp=document.getElementById('pp-exp').value;
   if(!country){showToast('Country name required');return;}
-  const pp={id:'pp'+Date.now(),country:country,code:code,no:no,exp:exp};
-  state.passports.push(pp);
-  if(!state.activePassportId) state.activePassportId=pp.id;
-  save();closeModal('passport-modal');renderAll();showToast('Passport added ✓');
+  if(editId){
+    // Edit existing
+    const pp = state.passports.find(function(p){ return p.id===editId; });
+    if(pp){ pp.country=country; pp.code=code; pp.no=no; pp.expiry=exp; }
+    saveState(); closeModal('passport-modal'); renderPassportTabs(); showToast('Passport updated ✓');
+  } else {
+    // Add new
+    if(state.passports.length>=2){showToast('Maximum 2 passports allowed.');return;}
+    const pp={id:'pp'+Date.now(),country:country,code:code,no:no,expiry:exp};
+    state.passports.push(pp);
+    if(!state.activePassportId) state.activePassportId=pp.id;
+    saveState(); closeModal('passport-modal'); renderPassportTabs(); renderAllVisas(); showToast('Passport added ✓');
+  }
   ['pp-country','pp-code','pp-no','pp-exp'].forEach(function(i){document.getElementById(i).value='';});
 }
 
