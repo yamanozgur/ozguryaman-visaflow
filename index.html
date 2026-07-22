@@ -1637,7 +1637,6 @@ function renderPassportTabs(){
     html+='<div class="passport-tab '+(active?'active':'')+'" onclick="setActivePassport(\''+pp.id+'\')">'+
       '<div style="width:18px;height:18px;border-radius:50%;overflow:hidden;flex-shrink:0">'+flagHtml+'</div>'+
       pp.country+
-      '<span onclick="event.stopPropagation();editPassport(\''+pp.id+'\')\'" style="margin-left:4px;font-size:12px;cursor:pointer;opacity:0.7">✏️</span>'+
     '</div>';
   });
   if(state.passports.length < 2){
@@ -1675,6 +1674,13 @@ function deletePassport(){
   state.passports = state.passports.filter(function(p){ return p.id!==id; });
   if(state.activePassportId===id){ state.activePassportId = state.passports.length ? state.passports[0].id : null; }
   saveState(); closeModal('passport-modal'); renderPassportTabs(); renderAllVisas();
+  showToast('Passport deleted.');
+}
+function profileDeletePassport(id){
+  if(!confirm('Delete this passport?')) return;
+  state.passports = state.passports.filter(function(p){ return p.id!==id; });
+  if(state.activePassportId===id){ state.activePassportId = state.passports.length ? state.passports[0].id : null; }
+  saveState(); renderProfile(); renderPassportTabs(); renderAllVisas();
   showToast('Passport deleted.');
 }
 function setActivePassport(id){ state.activePassportId=id; renderAllVisas(); }
@@ -2186,8 +2192,9 @@ function renderProfile(){
         const cs=getCS(pp.country), expDl=pp.exp?daysBetween(today(),pp.exp):-1;
         return '<div class="settings-item">'+flagImg(pp.country,cs,'sm')+
           '<div class="settings-label">'+pp.country+'</div>'+
-          '<div class="settings-value">'+(pp.exp?fmtDate(pp.exp):'—')+'</div>'+
+          '<div class="settings-value">'+(pp.expiry?fmtDate(pp.expiry):(pp.exp?fmtDate(pp.exp):'—'))+'</div>'+
           (expDl>=0&&expDl<=90?'<span class="badge badge-orange" style="margin-left:6px">Exp. soon</span>':'')+
+          '<button onclick="profileDeletePassport(\''+pp.id+'\')" style="margin-left:10px;background:var(--red-l);color:var(--red);border:1.5px solid #FECACA;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">✕</button>'+
         '</div>';
       }).join('')+
       '<div class="settings-item" onclick="triggerPassportAdd()">'+
