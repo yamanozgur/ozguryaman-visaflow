@@ -1422,7 +1422,7 @@ function renderSchengenTracker(){
   var hasSchengenTravel = state.travels.find(function(t){ return isSchengen(t.country); });
   var currentlyInSchengen = state.currentCountry && isSchengen(state.currentCountry);
 
-  if(!hasSchengenVisa && !hasSchengenTravel && !currentlyInSchengen){
+  if(!hasSchengenTravel && !currentlyInSchengen){
     el.innerHTML=''; return;
   }
 
